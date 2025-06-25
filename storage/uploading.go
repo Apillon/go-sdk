@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -17,7 +16,7 @@ import (
 
 const (
 	defaultContentType = "text/plain"
-	urlReadyDelay     = 2 * time.Second
+	urlReadyDelay      = 2 * time.Second
 )
 
 // StartUploadFilesToBucket initiates an upload session for a set of files in a given bucket.

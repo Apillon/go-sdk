@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/Apillon/go-sdk/requests"
 )
@@ -25,8 +24,8 @@ func (e *StorageError) Error() string {
 
 // Error codes
 const (
-	ErrCodeDirectoryNotFound  = 40406003
-	ErrCodeDirectoryDeleting  = 40006007
+	ErrCodeDirectoryNotFound = 40406003
+	ErrCodeDirectoryDeleting = 40006007
 	ErrCodeInvalidInput      = 40000001
 )
 

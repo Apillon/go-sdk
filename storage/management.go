@@ -3,8 +3,6 @@ package storage
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"log"
 	"strings"
 
 	"github.com/Apillon/go-sdk/requests"
@@ -41,7 +39,7 @@ func CreateBucket(ctx context.Context, name string, description string) error {
 		}
 	}
 
-	res, err := requests.PostReq(ctx, "/storage/buckets", strings.NewReader(string(bodyBytes)))
+	_, err = requests.PostReq(ctx, "/storage/buckets", strings.NewReader(string(bodyBytes)))
 	if err != nil {
 		return &StorageError{
 			Code:    500,

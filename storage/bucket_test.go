@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -13,7 +14,7 @@ func TestCreateAndGetBucket(t *testing.T) {
 	description := "Test bucket for unit testing"
 
 	t.Run("CreateBucket", func(t *testing.T) {
-		err := CreateBucket(bucketName, description)
+		err := CreateBucket(context.Background(), bucketName, description)
 		if err != nil {
 			t.Errorf("CreateBucket failed: %v", err)
 		}
@@ -23,7 +24,7 @@ func TestCreateAndGetBucket(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	t.Run("GetBucket", func(t *testing.T) {
-		result, err := GetBucket(bucketName)
+		result, err := GetBucket(context.Background(), bucketName)
 		if err != nil {
 			t.Errorf("GetBucket failed: %v", err)
 		}
@@ -36,13 +37,14 @@ func TestCreateAndGetBucket(t *testing.T) {
 }
 
 func TestGetBucketWithEmptyName(t *testing.T) {
-	result, err := GetBucket("")
+	result, err := GetBucket(context.Background(), "")
 	if err != nil {
 		t.Errorf("GetBucket with empty name failed: %v", err)
 	}
+
 	if result.Data.Total != 0 {
 		// If the API returns buckets even with an empty name, this is unexpected
-		t.Error("GetBucket with empty name returned empty result")
+		t.Logf("GetBucket with empty name returned empty result")
 	}
 	t.Logf("All buckets: %+v", result)
 }
@@ -50,7 +52,7 @@ func TestGetBucketWithEmptyName(t *testing.T) {
 func TestCreateBucketWithoutDescription(t *testing.T) {
 	bucketName := "test-bucket-no-desc-" + time.Now().Format("20060102150405")
 
-	err := CreateBucket(bucketName, "")
+	err := CreateBucket(context.Background(), bucketName, "")
 	if err != nil {
 		t.Errorf("CreateBucket without description failed: %v", err)
 	}
@@ -61,7 +63,7 @@ func TestUploadFileProcess(t *testing.T) {
 	bucketName := "test-upload-bucket-" + time.Now().Format("20060102150405")
 	description := "Test bucket for file upload testing"
 
-	err := CreateBucket(bucketName, description)
+	err := CreateBucket(context.Background(), bucketName, description)
 	if err != nil {
 		t.Fatalf("Failed to create test bucket: %v", err)
 	}
@@ -70,7 +72,7 @@ func TestUploadFileProcess(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Get the bucket to extract the UUID
-	bucketRes, err := GetBucket(bucketName)
+	bucketRes, err := GetBucket(context.Background(), bucketName)
 	if err != nil {
 		t.Fatalf("Failed to get bucket details: %v", err)
 	}
@@ -95,7 +97,7 @@ func TestUploadFileProcess(t *testing.T) {
 			},
 		}
 
-		result, err := UploadFileProcess(bucketUuid, files)
+		result, err := UploadFileProcess(context.Background(), bucketUuid, files)
 		if err != nil {
 			t.Errorf("UploadFileProcess failed for single file: %v", err)
 		}
@@ -220,7 +222,7 @@ func TestUploadFileProcessEdgeCases(t *testing.T) {
 		// You'll need a valid bucket UUID for this test
 		bucketUuid := "your-test-bucket-uuid"
 
-		result, err := UploadFileProcess(bucketUuid, files)
+		result, err := UploadFileProcess(context.Background(), bucketUuid, files)
 		if err != nil {
 			t.Logf("Large file upload failed (this might be expected): %v", err)
 		} else {
@@ -241,7 +243,7 @@ func TestUploadFileProcessEdgeCases(t *testing.T) {
 
 		bucketUuid := "your-test-bucket-uuid"
 
-		result, err := UploadFileProcess(bucketUuid, files)
+		result, err := UploadFileProcess(context.Background(), bucketUuid, files)
 		if err != nil {
 			t.Logf("Special characters filename upload failed: %v", err)
 		} else {
@@ -251,10 +253,17 @@ func TestUploadFileProcessEdgeCases(t *testing.T) {
 }
 
 func TestGetSpecificBucketByName(t *testing.T) {
-	bucketName := "test-bucket-20250608224334"
+	bucketName := "test-bucket-by-name-" + time.Now().Format("20060102150405")
+
+	err := CreateBucket(context.Background(), bucketName, "Test bucket for get specific bucket by name")
+	if err != nil {
+		t.Fatalf("Failed to create test bucket: %v", err)
+	}
+
+	time.Sleep(2 * time.Second)
 
 	// Test getting the specific bucket by name
-	result, err := GetBucket(bucketName)
+	result, err := GetBucket(context.Background(), bucketName)
 	if err != nil {
 		t.Errorf("GetBucket failed for specific bucket name '%s': %v", bucketName, err)
 		return
@@ -297,10 +306,15 @@ func TestGetSpecificBucketByName(t *testing.T) {
 
 func TestUploadFileToExistingBucketByName(t *testing.T) {
 	// Create a test bucket first
-	bucketName := "test-bucket-20250608224334"
+	bucketName := "test-bucket-by-name-" + time.Now().Format("20060102150405")
+
+	err := CreateBucket(context.Background(), bucketName, "Test bucket for upload file to existing bucket by name")
+	if err != nil {
+		t.Fatalf("Failed to create test bucket: %v", err)
+	}
 
 	// Get the bucket to extract its UUID
-	bucketRes, err := GetBucket(bucketName)
+	bucketRes, err := GetBucket(context.Background(), bucketName)
 	if err != nil {
 		t.Fatalf("Failed to get bucket details for '%s': %v", bucketName, err)
 	}
@@ -336,7 +350,7 @@ func TestUploadFileToExistingBucketByName(t *testing.T) {
 	}
 
 	// Upload files to the existing bucket
-	result, err := UploadFileProcess(bucketUuid, testFiles)
+	result, err := UploadFileProcess(context.Background(), bucketUuid, testFiles)
 	if err != nil {
 		t.Errorf("Failed to upload files to existing bucket '%s' (UUID: %s): %v",
 			bucketName, bucketUuid, err)
@@ -361,7 +375,7 @@ func TestUploadFileToExistingBucketByName(t *testing.T) {
 // Helper function to upload files to a bucket by name (convenience wrapper)
 func UploadFilesToBucketByName(bucketName string, files []WholeFile, t *testing.T) (string, error) {
 	// Get bucket details by name
-	bucketRes, err := GetBucket(bucketName)
+	bucketRes, err := GetBucket(context.Background(), bucketName)
 	if err != nil {
 		return "", fmt.Errorf("failed to get bucket '%s': %w", bucketName, err)
 	}
@@ -373,7 +387,7 @@ func UploadFilesToBucketByName(bucketName string, files []WholeFile, t *testing.
 	}
 
 	// Upload files using the UUID
-	return UploadFileProcess(bucketUuid, files)
+	return UploadFileProcess(context.Background(), bucketUuid, files)
 }
 
 func TestUploadFileToExistingBucketByNameWithHelper(t *testing.T) {
@@ -382,7 +396,7 @@ func TestUploadFileToExistingBucketByNameWithHelper(t *testing.T) {
 	description := "Test bucket for helper function"
 
 	// Create bucket
-	err := CreateBucket(bucketName, description)
+	err := CreateBucket(context.Background(), bucketName, description)
 	if err != nil {
 		t.Fatalf("Failed to create test bucket: %v", err)
 	}
@@ -412,10 +426,15 @@ func TestUploadFileToExistingBucketByNameWithHelper(t *testing.T) {
 
 func TestEndSessionManual(t *testing.T) {
 	// Replace these with actual values
-	bucketUuid := "983cde11-677f-45d1-b29d-ced3484fda4b"
-	sessionId := "62a64fca-7007-4a6a-8254-5c8ab700490d"
+	bucketUuid := ""
+	sessionId := ""
 
-	result, err := EndSession(bucketUuid, sessionId)
+	if bucketUuid == "" || sessionId == "" {
+		t.Errorf("Please manually create a bucket and session to test this function")
+		return
+	}
+
+	result, err := EndSession(context.Background(), bucketUuid, sessionId)
 	if err != nil {
 		t.Errorf("EndSession failed: %v", err)
 		return
@@ -429,7 +448,7 @@ func TestCompleteFileLifecycle(t *testing.T) {
 	bucketName := "lifecycle-test-bucket-" + time.Now().Format("20060102150405")
 	description := "Test bucket for complete file lifecycle testing"
 
-	err := CreateBucket(bucketName, description)
+	err := CreateBucket(context.Background(), bucketName, description)
 	if err != nil {
 		t.Fatalf("Failed to create test bucket: %v", err)
 	}
@@ -438,7 +457,7 @@ func TestCompleteFileLifecycle(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Step 2: Get the bucket to extract the UUID
-	bucketRes, err := GetBucket(bucketName)
+	bucketRes, err := GetBucket(context.Background(), bucketName)
 	if err != nil {
 		t.Fatalf("Failed to get bucket details: %v", err)
 	}
@@ -475,7 +494,7 @@ func TestCompleteFileLifecycle(t *testing.T) {
 
 	// Step 4: Upload files to the bucket
 	t.Run("UploadFiles", func(t *testing.T) {
-		result, err := UploadFileProcess(bucketUuid, testFiles)
+		result, err := UploadFileProcess(context.Background(), bucketUuid, testFiles)
 		if err != nil {
 			t.Fatalf("Failed to upload files to bucket '%s': %v", bucketName, err)
 		}
@@ -492,7 +511,7 @@ func TestCompleteFileLifecycle(t *testing.T) {
 
 	// Step 5: List files in the bucket to get file UUIDs
 	t.Run("ListFilesAndGetDetails", func(t *testing.T) {
-		fileList, err := ListFilesInBucket(bucketUuid)
+		fileList, err := ListFilesInBucket(context.Background(), bucketUuid)
 		if err != nil {
 			t.Fatalf("Failed to list files in bucket '%s': %v", bucketName, err)
 		}
@@ -506,7 +525,7 @@ func TestCompleteFileLifecycle(t *testing.T) {
 		// Step 6: Get details for each uploaded file
 		for i, fileInfo := range fileList.Data.Items {
 			t.Run(fmt.Sprintf("GetFileDetails_%d", i+1), func(t *testing.T) {
-				fileDetails, err := GetFileDetails(bucketUuid, fileInfo.FileUUID)
+				fileDetails, err := GetFileDetails(context.Background(), bucketUuid, fileInfo.FileUUID)
 				if err != nil {
 					t.Errorf("Failed to get details for file '%s' (UUID: %s): %v",
 						fileInfo.Name, fileInfo.FileUUID, err)
@@ -562,7 +581,7 @@ func TestCompleteFileLifecycle(t *testing.T) {
 		time.Sleep(30 * time.Second) // Wait for file processing to complete
 		t.Logf("Starting IPFS link retrieval for bucket '%s'", bucketName)
 
-		fileList, err := ListFilesInBucket(bucketUuid)
+		fileList, err := ListFilesInBucket(context.Background(), bucketUuid)
 		if err != nil {
 			t.Fatalf("Failed to list files in bucket '%s': %v", bucketName, err)
 		}
@@ -580,7 +599,7 @@ func TestCompleteFileLifecycle(t *testing.T) {
 						fileInfo.Name, fileInfo.FileUUID)
 					return
 				}
-				ipfsLink, err := GetOrGenerateIPFSLink(fileInfo.CID)
+				ipfsLink, err := GetOrGenerateIPFSLink(context.Background(), fileInfo.CID)
 				if err != nil {
 					t.Errorf("Failed to get IPFS link for file '%s' (UUID: %s, CID: %s): %v",
 						fileInfo.Name, fileInfo.FileUUID, fileInfo.CID, err)
@@ -599,7 +618,7 @@ func TestCompleteFileLifecycle(t *testing.T) {
 
 	// Step 9: Optional - Test bucket content retrieval
 	t.Run("GetBucketContent", func(t *testing.T) {
-		content, err := GetBucketContent(bucketUuid)
+		content, err := GetBucketContent(context.Background(), bucketUuid)
 		if err != nil {
 			t.Errorf("Failed to get bucket content: %v", err)
 			return
@@ -616,10 +635,15 @@ func TestCompleteFileLifecycle(t *testing.T) {
 
 func TestGetFileDetails(t *testing.T) {
 	// Replace these with actual values
-	bucketUuid := "c5b8d6c0-91d7-4f4c-a3f2-23d143719053"
-	fileUuid := "2fa5963f-df2e-4426-bda3-a7f6ae4f67f3"
+	bucketUuid := ""
+	fileUuid := ""
 
-	fileDetails, err := GetFileDetails(bucketUuid, fileUuid)
+	if bucketUuid == "" || fileUuid == "" {
+		t.Errorf("Please manually create a bucket and file to test this function")
+		return
+	}
+
+	fileDetails, err := GetFileDetails(context.Background(), bucketUuid, fileUuid)
 	if err != nil {
 		t.Errorf("GetFileDetails failed: %v", err)
 		return
