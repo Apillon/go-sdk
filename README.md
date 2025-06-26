@@ -284,7 +284,7 @@ MIT License
 ## Notes
 
 - Ensure your API key is kept secure and **never** committed to version control.
-- For more details on the Apillon and the API, see the [official documentation](https://wiki.apillon.io/).
-- The SDK now supports context for better control over request lifecycle and cancellation.
+- For more details on the Apillon and the API, see the [API documentation](https://wiki.apillon.io/build/1-apillon-api.html).
+- The SDK supports context for better control over request lifecycle and cancellation.
 - All operations include automatic retries for failed requests.
 - Input validation is performed on all operations to ensure data integrity.
